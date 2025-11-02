@@ -3,10 +3,10 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18
+      nodejs: 20   # ✅ Use Node 20 for React 18+ / Vite 5+ compatibility
     commands:
       - echo "Installing dependencies..."
-      - npm install
+      - npm ci || npm install  # 'npm ci' is faster and cleaner in CI/CD
   build:
     commands:
       - echo "Building React app..."
@@ -14,7 +14,7 @@ phases:
   post_build:
     commands:
       - echo "Uploading files to S3..."
-      - aws s3 sync dist/ s3://docnet-frontend-furcode --delete
+      - if [ -d "dist" ]; then aws s3 sync dist/ s3://docnet-frontend-furcode --delete; else echo "❌ dist folder not found!"; exit 1; fi
 
 artifacts:
   files:
