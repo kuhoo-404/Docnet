@@ -3,19 +3,36 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 20   # ✅ Use Node 20 for React 18+ / Vite 5+ compatibility
+      nodejs: 20  # ✅ Node 20 works perfectly with Vite and React 18+
     commands:
-      - echo "Installing dependencies..."
-      - npm ci || npm install  # 'npm ci' is faster and cleaner in CI/CD
+      - echo "📦 Installing dependencies..."
+      - npm ci || npm install  # Use npm ci if package-lock.json exists
+
   build:
     commands:
-      - echo "Building React app..."
-      - npm run build
+      - echo "🏗️ Building Vite app..."
+      - npm run build  # This creates the dist/ folder
+
   post_build:
     commands:
-      - echo "Uploading files to S3..."
-      - if [ -d "dist" ]; then aws s3 sync dist/ s3://docnet-frontend-furcode --delete; else echo "❌ dist folder not found!"; exit 1; fi
+      - echo "🚀 Uploading build files to S3..."
+      # ✅ Sync dist folder to S3 with correct MIME types
+      - |
+        if [ -d "dist" ]; then
+          echo "✅ Found dist folder. Starting upload..."
+          aws s3 sync dist/ s3://docnet-frontend-furcode \
+            --delete \
+            --cache-control "max-age=31536000" \
+            --content-type "text/html" \
+            --metadata-directive REPLACE
+        else
+          echo "❌ dist folder not found!"
+          exit 1
+        fi
+      - echo "🎉 Deployment complete!"
 
 artifacts:
   files:
     - '**/*'
+  base-directory: dist
+  discard-paths: no
